@@ -26,9 +26,9 @@ class SVGCharts {
     }
 
     const segments = [
-      { label: 'Transportation', value: data.transport, color: '#3b82f6', icon: '🚗' },
-      { label: 'Energy Usage', value: data.energy, color: '#f59e0b', icon: '⚡' },
-      { label: 'Lifestyle Habits', value: data.lifestyle, color: '#10b981', icon: '🌱' }
+      { label: 'Transportation', value: data.transport, color: 'var(--text-primary)' },
+      { label: 'Energy Usage', value: data.energy, color: 'var(--text-muted)' },
+      { label: 'Lifestyle Habits', value: data.lifestyle, color: 'var(--text-secondary)' }
     ];
 
     const r = 35;
@@ -100,7 +100,7 @@ class SVGCharts {
       
       const labelText = document.createElement('span');
       labelText.className = 'legend-text';
-      labelText.textContent = ` ${seg.icon} ${seg.label}: `;
+      labelText.textContent = ` ${seg.label}: `;
       
       const valueText = document.createElement('strong');
       valueText.className = 'legend-value';
@@ -373,11 +373,11 @@ class SVGCharts {
         stroke-linecap="round"
       />
       
-      <!-- Green Target zone indicator path (0 to Target) -->
+      <!-- Target zone indicator path (0 to Target) -->
       <path 
         d="M 30 90 A 70 70 0 0 1 ${getCoords(targetAngle).x} ${getCoords(targetAngle).y}" 
         fill="transparent" 
-        stroke="var(--accent-primary)" 
+        stroke="var(--text-primary)" 
         stroke-width="12" 
         stroke-linecap="square"
       />
@@ -386,7 +386,7 @@ class SVGCharts {
       <line 
         x1="${cx}" y1="${cy}" 
         x2="${targetPt.x}" y2="${targetPt.y}" 
-        stroke="var(--accent-primary)" 
+        stroke="var(--text-primary)" 
         stroke-dasharray="2,2" 
         stroke-width="2"
       />
@@ -401,7 +401,7 @@ class SVGCharts {
       <line 
         x1="${cx}" y1="${cy}" 
         x2="${avgPt.x}" y2="${avgPt.y}" 
-        stroke="var(--accent-warning)" 
+        stroke="var(--text-muted)" 
         stroke-dasharray="2,2" 
         stroke-width="2"
       />
@@ -419,7 +419,7 @@ class SVGCharts {
       <line 
         x1="${cx}" y1="${cy}" 
         x2="${userPt.x}" y2="${userPt.y}" 
-        stroke="var(--accent-danger)" 
+        stroke="var(--text-primary)" 
         stroke-width="4" 
         stroke-linecap="round"
         class="gauge-needle"

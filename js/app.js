@@ -7,9 +7,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // Application State
   let state = {
     history: [],
-    goals: [],
+    goals: new Map(),
     preferences: { theme: 'dark' }
   };
+
+  /**
+   * Serializes the internal Map data structures to plain formats and persists to local storage.
+   */
+  function saveState() {
+    const dataToSave = {
+      history: state.history,
+      preferences: state.preferences,
+      goals: Array.from(state.goals.values())
+    };
+    window.StorageManager.save(dataToSave);
+  }
 
   // DOM Cache
   const calcForm = document.getElementById('calculator-form');
@@ -78,7 +90,10 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   function init() {
     // 1. Load data from local storage
-    state = window.StorageManager.load();
+    const loadedData = window.StorageManager.load();
+    state.history = loadedData.history || [];
+    state.preferences = loadedData.preferences || { theme: 'dark' };
+    state.goals = new Map((loadedData.goals || []).map(g => [g.id, g]));
 
     // 2. Initialize design theme
     applyTheme(state.preferences.theme);
@@ -100,10 +115,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     if (theme === 'light') {
-      themeIcon.textContent = '🌙';
+      themeIcon.textContent = '';
       themeBtnText.textContent = 'Dark Mode';
     } else {
-      themeIcon.textContent = '☀️';
+      themeIcon.textContent = '';
       themeBtnText.textContent = 'Light Mode';
     }
   }
@@ -149,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
       state.preferences.theme = newTheme;
       applyTheme(newTheme);
-      window.StorageManager.save(state);
+      saveState();
     });
 
     // Print Report
@@ -201,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
       };
 
       state.history.push(newRecord);
-      window.StorageManager.save(state);
+      saveState();
       
       // Re-render dashboard visualizations and insights
       render();
@@ -242,8 +257,8 @@ document.addEventListener('DOMContentLoaded', () => {
         createdAt: Date.now()
       };
 
-      state.goals.push(newGoal);
-      window.StorageManager.save(state);
+      state.goals.set(newGoal.id, newGoal);
+      saveState();
 
       // Clear input fields
       goalTitleInput.value = '';
@@ -261,7 +276,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const savings = parseInt(addBtn.getAttribute('data-savings'), 10) || 100;
 
       // Check if goal already exists to prevent duplicate additions
-      const isDuplicate = state.goals.some(g => g.title === title && !g.completed);
+      const isDuplicate = Array.from(state.goals.values()).some(g => g.title === title && !g.completed);
       if (isDuplicate) {
         showToast('This recommendation is already active in your goals list!', 'info');
         return;
@@ -285,8 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
         createdAt: Date.now()
       };
 
-      state.goals.push(newGoal);
-      window.StorageManager.save(state);
+      state.goals.set(newGoal.id, newGoal);
+      saveState();
 
       // Render update
       render();
@@ -301,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!checkbox) return;
 
       const goalId = checkbox.getAttribute('data-id');
-      const goal = state.goals.find(g => g.id === goalId);
+      const goal = state.goals.get(goalId);
       if (goal) {
         goal.completed = checkbox.checked;
         
@@ -311,7 +326,7 @@ document.addEventListener('DOMContentLoaded', () => {
           goal.currentValue = sorted[0].total;
         }
 
-        window.StorageManager.save(state);
+        saveState();
         render();
       }
     });
@@ -321,8 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!deleteBtn) return;
 
       const goalId = deleteBtn.getAttribute('data-id');
-      state.goals = state.goals.filter(g => g.id !== goalId);
-      window.StorageManager.save(state);
+      state.goals.delete(goalId);
+      saveState();
       render();
     });
   }
@@ -450,7 +465,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Active goals counts
-    const activeCount = state.goals.filter(g => !g.completed).length;
+    const activeCount = Array.from(state.goals.values()).filter(g => !g.completed).length;
     summaryGoalsCount.textContent = String(activeCount);
   }
 
@@ -474,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Use safe DOM operations for titles and texts to block XSS
       const categoryEl = document.createElement('div');
       categoryEl.className = 'rec-category';
-      categoryEl.textContent = `${getCategoryIcon(rec.category)} ${rec.category}`;
+      categoryEl.textContent = rec.category.toUpperCase();
 
       const titleEl = document.createElement('h3');
       titleEl.className = 'rec-title';
@@ -522,12 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
    * @returns {string} Icon.
    */
   function getCategoryIcon(cat) {
-    switch(cat) {
-      case 'transport': return '🚗';
-      case 'energy': return '⚡';
-      case 'lifestyle': return '🌱';
-      default: return '📍';
-    }
+    return '';
   }
 
   /**
@@ -536,7 +546,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function renderGoalsList() {
     goalsContainer.innerHTML = '';
     
-    if (state.goals.length === 0) {
+    if (state.goals.size === 0) {
       goalsContainer.innerHTML = '';
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'empty-chart';
@@ -576,7 +586,7 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteBtn.className = 'goal-delete-btn';
       deleteBtn.setAttribute('data-id', goal.id);
       deleteBtn.setAttribute('aria-label', `Delete goal "${goal.title}"`);
-      deleteBtn.innerHTML = '🗑️';
+      deleteBtn.innerHTML = '&times;';
 
       header.appendChild(label);
       header.appendChild(deleteBtn);

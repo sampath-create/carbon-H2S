@@ -5,27 +5,27 @@
 
 
 :root {
-  /* Color Palette (Obsidian & Emerald) */
-  --bg-primary: #080f0c;
-  --bg-secondary: #0f1c16;
-  --bg-tertiary: #172d24;
-  --bg-card: rgba(15, 28, 22, 0.7);
+  /* Color Palette (Sleek Monochrome Black & White) */
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #141414;
+  --bg-tertiary: #222222;
+  --bg-card: rgba(20, 20, 20, 0.75);
   
-  --text-primary: #f2f7f5;
-  --text-secondary: #a3b8b0;
-  --text-muted: #617b71;
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
   
-  --accent-primary: #10b981;
-  --accent-secondary: #059669;
-  --accent-glow: rgba(16, 185, 129, 0.25);
+  --accent-primary: #ffffff;
+  --accent-secondary: #e5e5e5;
+  --accent-glow: rgba(255, 255, 255, 0.12);
   
-  --accent-warning: #f59e0b;
-  --accent-danger: #ef4444;
-  --accent-info: #3b82f6;
+  --accent-warning: #888888;
+  --accent-danger: #ef4444; /* Standard alert color remains for error alerts */
+  --accent-info: #888888;
 
   /* Borders & Shadows */
-  --border-color: rgba(16, 185, 129, 0.18);
-  --border-focus: #10b981;
+  --border-color: rgba(255, 255, 255, 0.15);
+  --border-focus: #ffffff;
   --border-radius-sm: 8px;
   --border-radius-md: 14px;
   --border-radius-lg: 24px;
@@ -33,7 +33,7 @@
   --shadow-sm: 0 4px 6px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.2);
+  --shadow-glow: 0 0 20px rgba(255, 255, 255, 0.1);
 
   /* Typography */
   --font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -43,24 +43,26 @@
 
 /* Light Theme Variables Toggle */
 [data-theme="light"] {
-  --bg-primary: #f4f7f5;
-  --bg-secondary: #ffffff;
-  --bg-tertiary: #e6ede9;
-  --bg-card: rgba(255, 255, 255, 0.85);
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f5;
+  --bg-tertiary: #e5e5e5;
+  --bg-card: rgba(245, 245, 245, 0.85);
   
-  --text-primary: #1c2e27;
-  --text-secondary: #4d665d;
-  --text-muted: #546e63;
+  --text-primary: #171717;
+  --text-secondary: #404040;
+  --text-muted: #737373;
   
-  --accent-primary: #059669;
-  --accent-secondary: #047857;
-  --accent-glow: rgba(5, 150, 105, 0.15);
+  --accent-primary: #000000;
+  --accent-secondary: #262626;
+  --accent-glow: rgba(0, 0, 0, 0.08);
   
-  --border-color: rgba(5, 150, 105, 0.22);
+  --border-color: rgba(0, 0, 0, 0.12);
+  --border-focus: #000000;
+  
   --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
   --shadow-md: 0 8px 16px rgba(0,0,0,0.08);
   --shadow-lg: 0 16px 24px rgba(0,0,0,0.12);
-  --shadow-glow: 0 0 15px rgba(5, 150, 105, 0.1);
+  --shadow-glow: 0 0 15px rgba(0, 0, 0, 0.05);
 }
 
 /* Reset & Core Styles */
@@ -688,9 +690,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
   font-weight: 600;
 }
 
-.badge-easy { background: rgba(16, 185, 129, 0.15); color: var(--accent-primary); }
-.badge-medium { background: rgba(245, 158, 11, 0.15); color: var(--accent-warning); }
-.badge-hard { background: rgba(239, 68, 68, 0.15); color: var(--accent-danger); }
+.badge-easy { background: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-color); }
+.badge-medium { background: var(--text-muted); color: var(--bg-primary); }
+.badge-hard { background: var(--text-primary); color: var(--bg-primary); }
 
 /* Goals Tracker layout */
 .goals-wrapper {
@@ -733,8 +735,9 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 .goal-card.completed {
-  border-color: rgba(16, 185, 129, 0.4);
-  background: rgba(16, 185, 129, 0.02);
+  border-color: var(--border-color);
+  background: var(--bg-tertiary);
+  opacity: 0.85;
 }
 
 .goal-header {

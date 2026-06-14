@@ -8,48 +8,48 @@
  */
 const EMISSION_FACTORS = Object.freeze({
   // Vehicle factors per km
-  vehicle: {
+  vehicle: Object.freeze({
     petrol: 0.18,   // kg CO2e / km
     diesel: 0.17,   // kg CO2e / km
     hybrid: 0.10,   // kg CO2e / km
     electric: 0.05, // kg CO2e / km (average grid charging)
     none: 0.00
-  },
+  }),
   
   // Public transport factor per km
   publicTransport: 0.04, // kg CO2e / km (bus/train average)
   
   // Flights per single flight event
-  flights: {
+  flights: Object.freeze({
     short: 150,  // < 3 hours (~1000 km return/single equivalent)
     long: 1200   // > 3 hours (~8000 km return/single equivalent)
-  },
+  }),
   
   // Electricity factor per kWh
   electricity: 0.38, // kg CO2e / kWh (grid average)
   
   // Diet factors (annual base)
-  diet: {
+  diet: Object.freeze({
     'heavy-meat': 3000,
     'average-meat': 2200,
     'flexitarian': 1600,
     'vegetarian': 1200,
     'vegan': 800
-  },
+  }),
   
   // Shopping habits (annual base)
-  shopping: {
+  shopping: Object.freeze({
     low: 400,
     medium: 1000,
     high: 2200
-  },
+  }),
   
   // Waste production (annual base)
-  waste: {
+  waste: Object.freeze({
     low: 100,
     medium: 300,
     high: 600
-  }
+  })
 });
 
 /**
