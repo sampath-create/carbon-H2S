@@ -103,11 +103,11 @@ class StorageManager {
         if (item && typeof item === 'object') {
           validated.history.push({
             id: String(item.id || `${Date.now()}-${Math.random()}`).replace(/[^\w-]/g, '').substring(0, 64),
-            timestamp: Number(item.timestamp) || Date.now(),
-            transport: Math.max(0, Number(item.transport) || 0),
-            energy: Math.max(0, Number(item.energy) || 0),
-            lifestyle: Math.max(0, Number(item.lifestyle) || 0),
-            total: Math.max(0, Number(item.total) || 0),
+            timestamp: this.sanitizeNumber(item.timestamp, 0, Number.MAX_SAFE_INTEGER),
+            transport: this.sanitizeNumber(item.transport, 0),
+            energy: this.sanitizeNumber(item.energy, 0),
+            lifestyle: this.sanitizeNumber(item.lifestyle, 0),
+            total: this.sanitizeNumber(item.total, 0),
             inputs: this.validateInputs(item.inputs)
           });
         }
@@ -132,11 +132,11 @@ class StorageManager {
             category: ['transport', 'energy', 'lifestyle', 'general'].includes(goal.category)
               ? goal.category
               : 'general',
-            targetPercent: Math.max(1, Math.min(100, Number(goal.targetPercent) || 10)),
-            currentValue: Math.max(0, Number(goal.currentValue) || 0),
-            targetValue: Math.max(0, Number(goal.targetValue) || 0),
+            targetPercent: this.sanitizeNumber(goal.targetPercent, 1, 100),
+            currentValue: this.sanitizeNumber(goal.currentValue, 0),
+            targetValue: this.sanitizeNumber(goal.targetValue, 0),
             completed: Boolean(goal.completed),
-            createdAt: Number(goal.createdAt) || Date.now()
+            createdAt: this.sanitizeNumber(goal.createdAt, 0, Number.MAX_SAFE_INTEGER)
           });
         }
       });
@@ -174,9 +174,8 @@ class StorageManager {
 
     Object.keys(numericBounds).forEach(key => {
       if (key in inputs) {
-        const val = Number(inputs[key]) || 0;
         const { min, max } = numericBounds[key];
-        safeInputs[key] = Math.max(min, Math.min(max, val));
+        safeInputs[key] = this.sanitizeNumber(inputs[key], min, max);
       }
     });
 
@@ -190,6 +189,23 @@ class StorageManager {
     });
 
     return safeInputs;
+  }
+
+  /**
+   * Sanitizes a numeric value to be finite and clamped within [min, max] bounds.
+   * Prevents injection of NaN or Infinity values.
+   *
+   * @param {*} value - Untrusted numeric input.
+   * @param {number} min - Lower bound.
+   * @param {number} max - Upper bound.
+   * @returns {number} Sanitized and clamped number.
+   */
+  static sanitizeNumber(value, min = 0, max = 100000) {
+    const num = Number(value);
+    if (!Number.isFinite(num)) {
+      return min;
+    }
+    return Math.max(min, Math.min(max, num));
   }
 
   /**

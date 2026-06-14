@@ -1,9 +1,14 @@
+'use strict';
+
 /**
  * @fileoverview Application entry point and coordinator. Handles event listening,
  * state changes, and DOM rendering delegation.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Constant Baseline
+  const DEFAULT_BASELINE = 8500;
+
   // Application State
   let state = {
     history: [],
@@ -65,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     const closeBtn = document.createElement('button');
     closeBtn.className = 'toast-close-btn';
-    closeBtn.innerHTML = '&times;';
+    closeBtn.textContent = '×';
     closeBtn.setAttribute('aria-label', 'Close notification');
     closeBtn.addEventListener('click', () => {
       toast.style.opacity = '0';
@@ -238,7 +243,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Calculate current baseline value if history exists
-      let latestTotal = 8500; // Default baseline if empty
+      let latestTotal = DEFAULT_BASELINE; // Default baseline if empty
       if (state.history.length > 0) {
         const sorted = [...state.history].sort((a, b) => b.timestamp - a.timestamp);
         latestTotal = sorted[0].total;
@@ -283,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Calculate current baseline total
-      let latestTotal = 8500;
+      let latestTotal = DEFAULT_BASELINE;
       if (state.history.length > 0) {
         const sorted = [...state.history].sort((a, b) => b.timestamp - a.timestamp);
         latestTotal = sorted[0].total;
@@ -315,7 +320,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const checkbox = e.target.closest('.goal-checkbox');
       if (!checkbox) return;
 
-      const goalId = checkbox.getAttribute('data-id');
+      const goalIdRaw = checkbox.getAttribute('data-id');
+      if (!goalIdRaw) return;
+      const goalId = String(goalIdRaw).replace(/[^\w-]/g, '').substring(0, 64);
       const goal = state.goals.get(goalId);
       if (goal) {
         goal.completed = checkbox.checked;
@@ -335,7 +342,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const deleteBtn = e.target.closest('.goal-delete-btn');
       if (!deleteBtn) return;
 
-      const goalId = deleteBtn.getAttribute('data-id');
+      const goalIdRaw = deleteBtn.getAttribute('data-id');
+      if (!goalIdRaw) return;
+      const goalId = String(goalIdRaw).replace(/[^\w-]/g, '').substring(0, 64);
       state.goals.delete(goalId);
       saveState();
       render();
@@ -451,7 +460,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } else {
         // Compare vs developed country average (8,500 kg)
-        const baseline = 8500;
+        const baseline = DEFAULT_BASELINE;
         const current = latestItem.total;
         const diff = ((baseline - current) / baseline) * 100;
         const sign = diff >= 0 ? '-' : '+';
@@ -475,7 +484,7 @@ document.addEventListener('DOMContentLoaded', () => {
    */
   function renderRecommendations(inputs) {
     const recommendations = window.InsightsEngine.generate(inputs);
-    recsContainer.innerHTML = '';
+    recsContainer.replaceChildren();
 
     recommendations.forEach(rec => {
       const card = document.createElement('div');
@@ -531,23 +540,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /**
-   * Helper function matching categories to local unicode icons.
-   * @param {string} cat 
-   * @returns {string} Icon.
-   */
-  function getCategoryIcon(cat) {
-    return '';
-  }
 
   /**
    * Render active goals.
    */
   function renderGoalsList() {
-    goalsContainer.innerHTML = '';
+    goalsContainer.replaceChildren();
     
     if (state.goals.size === 0) {
-      goalsContainer.innerHTML = '';
+      goalsContainer.replaceChildren();
       const emptyDiv = document.createElement('div');
       emptyDiv.className = 'empty-chart';
       emptyDiv.style.height = '100px';
@@ -586,7 +587,7 @@ document.addEventListener('DOMContentLoaded', () => {
       deleteBtn.className = 'goal-delete-btn';
       deleteBtn.setAttribute('data-id', goal.id);
       deleteBtn.setAttribute('aria-label', `Delete goal "${goal.title}"`);
-      deleteBtn.innerHTML = '&times;';
+      deleteBtn.textContent = '×';
 
       header.appendChild(label);
       header.appendChild(deleteBtn);
