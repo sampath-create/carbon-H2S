@@ -1,5 +1,9 @@
+'use strict';
+
 /**
- * @fileoverview Insights engine generating personalized recommendations based on carbon footprint inputs.
+ * @fileoverview Insights engine that generates prioritized, personalized carbon-reduction
+ * recommendations based on a user's calculator inputs.
+ * All methods are stateless and produce no side-effects.
  */
 
 class InsightsEngine {

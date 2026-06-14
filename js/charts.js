@@ -1,5 +1,9 @@
+'use strict';
+
 /**
- * @fileoverview Custom SVG Charting Module. Renders high-quality responsive graphs without external dependencies.
+ * @fileoverview Custom SVG Charting Module. Renders responsive, accessible
+ * SVG charts (donut, line trend, gauge) without external dependencies.
+ * All rendering methods are idempotent — they clear and rebuild the target container.
  */
 
 class SVGCharts {

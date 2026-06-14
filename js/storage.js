@@ -1,47 +1,74 @@
+'use strict';
+
 /**
  * @fileoverview Storage module for persistence, retrieval, and validation of user data.
+ * Provides XSS-safe read/write access to localStorage with strict schema enforcement.
  */
 
+/** @constant {string} localStorage key for all persisted application data. */
 const STORAGE_KEY = 'carbon_tracker_data_v1';
 
 /**
- * Default empty data schema.
+ * Immutable default data schema. Never mutate this object directly.
+ * @constant {Object}
  */
-const DEFAULT_DATA = {
+const DEFAULT_DATA = Object.freeze({
   history: [],
   goals: [],
-  preferences: {
+  preferences: Object.freeze({
     theme: 'dark'
-  }
-};
+  })
+});
 
 /**
- * Sanitizes and validates standard fields to prevent XSS and DB corruption.
+ * Returns a deep copy of the default data to prevent shared state mutation.
+ * @returns {Object}
+ */
+function getDefaultData() {
+  return {
+    history: [],
+    goals: [],
+    preferences: { theme: 'dark' }
+  };
+}
+
+/**
+ * Sanitizes and validates all application data structures to prevent XSS and data corruption.
+ * All methods are pure — they do not mutate their input arguments.
  */
 class StorageManager {
   /**
    * Safe retrieval of data from localStorage with validation.
-   * @returns {Object} Validated user data.
+   * Returns a fresh default data object on parse failure or empty storage.
+   *
+   * @returns {Object} Validated user data with guaranteed structure.
+   * @example
+   * const state = StorageManager.load();
+   * console.log(state.preferences.theme); // 'dark'
    */
   static load() {
     try {
       const serialized = localStorage.getItem(STORAGE_KEY);
       if (!serialized) {
-        return DEFAULT_DATA;
+        return getDefaultData();
       }
-      
+
       const parsed = JSON.parse(serialized);
       return this.validate(parsed);
     } catch (e) {
-      console.error('Failed to load local storage data. Resetting to default.', e);
-      return DEFAULT_DATA;
+      console.error('[StorageManager] Failed to load localStorage data. Resetting.', e);
+      return getDefaultData();
     }
   }
 
   /**
-   * Safe persistence of data to localStorage.
-   * @param {Object} data 
-   * @returns {boolean} Success status.
+   * Safe persistence of validated data to localStorage.
+   * Validates the data before writing to guarantee schema integrity.
+   *
+   * @param {Object} data - Application state to persist.
+   * @returns {boolean} True if save succeeded, false on error.
+   * @example
+   * const ok = StorageManager.save(state);
    */
   static save(data) {
     try {
@@ -49,60 +76,68 @@ class StorageManager {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(validated));
       return true;
     } catch (e) {
-      console.error('Failed to save data to local storage.', e);
+      console.error('[StorageManager] Failed to save to localStorage.', e);
       return false;
     }
   }
 
   /**
-   * Validate schema structure, enforce types, and sanitize inputs.
-   * @param {Object} data 
-   * @returns {Object} Validated and cleaned data.
+   * Validates the full application state schema, enforces types,
+   * sanitizes all string fields, and clamps numeric inputs.
+   *
+   * @param {*} data - Untrusted data parsed from localStorage.
+   * @returns {Object} A new validated and sanitized data object.
    */
   static validate(data) {
     const validated = {
-      history: Array.isArray(data?.history) ? [] : DEFAULT_DATA.history,
-      goals: Array.isArray(data?.goals) ? [] : DEFAULT_DATA.goals,
+      history: [],
+      goals: [],
       preferences: {
         theme: data?.preferences?.theme === 'light' ? 'light' : 'dark'
       }
     };
 
-    // Validate calculations history
+    // Validate and sanitize history entries
     if (Array.isArray(data?.history)) {
       data.history.forEach(item => {
         if (item && typeof item === 'object') {
-          const validItem = {
-            id: String(item.id || Date.now() + Math.random()),
+          validated.history.push({
+            id: String(item.id || `${Date.now()}-${Math.random()}`).replace(/[^\w-]/g, '').substring(0, 64),
             timestamp: Number(item.timestamp) || Date.now(),
             transport: Math.max(0, Number(item.transport) || 0),
             energy: Math.max(0, Number(item.energy) || 0),
             lifestyle: Math.max(0, Number(item.lifestyle) || 0),
             total: Math.max(0, Number(item.total) || 0),
             inputs: this.validateInputs(item.inputs)
-          };
-          validated.history.push(validItem);
+          });
         }
       });
     }
 
-    // Validate goals list
+    // Validate and sanitize goal entries
     if (Array.isArray(data?.goals)) {
       data.goals.forEach(goal => {
         if (goal && typeof goal === 'object' && goal.id && goal.title) {
-          const validGoal = {
-            id: String(goal.id).replace(/[^\w-]/g, ''), // Alphanumeric and dashes only
-            title: String(goal.title).substring(0, 100), // Cap title size
-            category: ['transport', 'energy', 'lifestyle', 'general'].includes(goal.category) 
-              ? goal.category 
+          const sanitizedId = String(goal.id).replace(/[^\w-]/g, '').substring(0, 64);
+          const sanitizedTitle = String(goal.title)
+            .replace(/[<>"'`]/g, '') // Strip HTML-dangerous chars
+            .trim()
+            .substring(0, 100);
+
+          if (!sanitizedId || !sanitizedTitle) return; // Skip invalid entries
+
+          validated.goals.push({
+            id: sanitizedId,
+            title: sanitizedTitle,
+            category: ['transport', 'energy', 'lifestyle', 'general'].includes(goal.category)
+              ? goal.category
               : 'general',
-            targetPercent: Math.max(1, Math.min(100, Number(goal.targetPercent) || 0)),
-            currentValue: Number(goal.currentValue) || 0,
-            targetValue: Number(goal.targetValue) || 0,
+            targetPercent: Math.max(1, Math.min(100, Number(goal.targetPercent) || 10)),
+            currentValue: Math.max(0, Number(goal.currentValue) || 0),
+            targetValue: Math.max(0, Number(goal.targetValue) || 0),
             completed: Boolean(goal.completed),
             createdAt: Number(goal.createdAt) || Date.now()
-          };
-          validated.goals.push(validGoal);
+          });
         }
       });
     }
@@ -111,9 +146,11 @@ class StorageManager {
   }
 
   /**
-   * Validates inputs stored alongside history to safely pre-populate inputs.
-   * @param {Object} inputs 
-   * @returns {Object} Validated input schema.
+   * Validates and sanitizes raw calculator form inputs.
+   * Clamps all numeric fields within documented bounds to prevent injection.
+   *
+   * @param {*} inputs - Untrusted inputs object from the calculation form.
+   * @returns {Object} A new sanitized inputs object.
    */
   static validateInputs(inputs) {
     if (!inputs || typeof inputs !== 'object') {
@@ -121,27 +158,34 @@ class StorageManager {
     }
 
     const safeInputs = {};
-    const bounds = {
-      carDist: { min: 0, max: 1000 },
-      pubDist: { min: 0, max: 1000 },
-      shortFlights: { min: 0, max: 100 },
-      longFlights: { min: 0, max: 100 },
-      electricity: { min: 0, max: 10000 },
-      renewPct: { min: 0, max: 100 }
-    };
-    const stringKeys = ['vehicleType', 'dietType', 'shoppingType', 'wasteType'];
 
-    Object.keys(bounds).forEach(key => {
+    /** @type {Object.<string, {min: number, max: number}>} */
+    const numericBounds = Object.freeze({
+      carDist:      { min: 0, max: 1000 },
+      pubDist:      { min: 0, max: 1000 },
+      shortFlights: { min: 0, max: 100 },
+      longFlights:  { min: 0, max: 100 },
+      electricity:  { min: 0, max: 10000 },
+      renewPct:     { min: 0, max: 100 }
+    });
+
+    /** @type {string[]} Keys that are enum-like string identifiers */
+    const enumKeys = ['vehicleType', 'dietType', 'shoppingType', 'wasteType'];
+
+    Object.keys(numericBounds).forEach(key => {
       if (key in inputs) {
         const val = Number(inputs[key]) || 0;
-        safeInputs[key] = Math.max(bounds[key].min, Math.min(bounds[key].max, val));
+        const { min, max } = numericBounds[key];
+        safeInputs[key] = Math.max(min, Math.min(max, val));
       }
     });
 
-    stringKeys.forEach(key => {
+    enumKeys.forEach(key => {
       if (key in inputs) {
-        // Sanitize string to prevent XSS injection in calculator form fields
-        safeInputs[key] = String(inputs[key]).replace(/[^\w-]/g, '').substring(0, 30);
+        // Allow only alphanumeric characters and hyphens (e.g. 'heavy-meat', 'petrol')
+        safeInputs[key] = String(inputs[key])
+          .replace(/[^\w-]/g, '')
+          .substring(0, 30);
       }
     });
 
@@ -149,18 +193,19 @@ class StorageManager {
   }
 
   /**
-   * Resets all storage data.
+   * Removes all application data from localStorage.
+   * @returns {boolean} True if cleared successfully, false on error.
    */
   static clear() {
     try {
       localStorage.removeItem(STORAGE_KEY);
       return true;
     } catch (e) {
-      console.error('Failed to clear storage.', e);
+      console.error('[StorageManager] Failed to clear storage.', e);
       return false;
     }
   }
 }
 
-// Export modules for vanilla JavaScript usage
+// Export module for vanilla JavaScript usage
 window.StorageManager = StorageManager;
