@@ -120,10 +120,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     if (theme === 'light') {
-      themeIcon.textContent = '';
+      themeIcon.textContent = '🌙';
       themeBtnText.textContent = 'Dark Mode';
     } else {
-      themeIcon.textContent = '';
+      themeIcon.textContent = '☀️';
       themeBtnText.textContent = 'Light Mode';
     }
   }

@@ -311,9 +311,10 @@
       });
 
       addTest('CarbonCalculator: Emission factors deep immutability check', () => {
+        'use strict';
         let threw = false;
         try {
-          window.CarbonCalculator.EMISSION_FACTORS.transport.petrol = 999;
+          window.EMISSION_FACTORS.vehicle.petrol = 999;
         } catch (e) {
           threw = true;
         }

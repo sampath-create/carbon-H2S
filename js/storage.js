@@ -120,7 +120,8 @@ class StorageManager {
         if (goal && typeof goal === 'object' && goal.id && goal.title) {
           const sanitizedId = String(goal.id).replace(/[^\w-]/g, '').substring(0, 64);
           const sanitizedTitle = String(goal.title)
-            .replace(/[<>"'`]/g, '') // Strip HTML-dangerous chars
+            .replace(/[<>"'`/()]/g, '') // Strip HTML-dangerous chars, slashes, and parentheses
+            .replace(/script/gi, '')    // Strip the word "script" to prevent execution
             .trim()
             .substring(0, 100);
 
@@ -153,11 +154,22 @@ class StorageManager {
    * @returns {Object} A new sanitized inputs object.
    */
   static validateInputs(inputs) {
-    if (!inputs || typeof inputs !== 'object') {
-      return {};
-    }
+    const safeInputs = {
+      carDist: 0,
+      vehicleType: 'none',
+      pubDist: 0,
+      shortFlights: 0,
+      longFlights: 0,
+      electricity: 0,
+      renewPct: 0,
+      dietType: 'average-meat',
+      shoppingType: 'medium',
+      wasteType: 'medium'
+    };
 
-    const safeInputs = {};
+    if (!inputs || typeof inputs !== 'object') {
+      return safeInputs;
+    }
 
     /** @type {Object.<string, {min: number, max: number}>} */
     const numericBounds = Object.freeze({
@@ -173,14 +185,14 @@ class StorageManager {
     const enumKeys = ['vehicleType', 'dietType', 'shoppingType', 'wasteType'];
 
     Object.keys(numericBounds).forEach(key => {
-      if (key in inputs) {
+      if (Object.prototype.hasOwnProperty.call(inputs, key)) {
         const { min, max } = numericBounds[key];
         safeInputs[key] = this.sanitizeNumber(inputs[key], min, max);
       }
     });
 
     enumKeys.forEach(key => {
-      if (key in inputs) {
+      if (Object.prototype.hasOwnProperty.call(inputs, key)) {
         // Allow only alphanumeric characters and hyphens (e.g. 'heavy-meat', 'petrol')
         safeInputs[key] = String(inputs[key])
           .replace(/[^\w-]/g, '')
@@ -193,7 +205,7 @@ class StorageManager {
 
   /**
    * Sanitizes a numeric value to be finite and clamped within [min, max] bounds.
-   * Prevents injection of NaN or Infinity values.
+   * Prevents injection of NaN or Infinity values. Uses parseFloat to handle mixed text inputs safely.
    *
    * @param {*} value - Untrusted numeric input.
    * @param {number} min - Lower bound.
@@ -201,7 +213,7 @@ class StorageManager {
    * @returns {number} Sanitized and clamped number.
    */
   static sanitizeNumber(value, min = 0, max = 100000) {
-    const num = Number(value);
+    const num = parseFloat(value);
     if (!Number.isFinite(num)) {
       return min;
     }

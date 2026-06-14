@@ -1,10 +1,13 @@
 FROM nginx:alpine
 
+# Copy custom secure Nginx configuration
+COPY default.conf /etc/nginx/conf.d/default.conf
+
 # Copy application files to Nginx directory
 COPY . /usr/share/nginx/html
 
-# Update Nginx config to listen on port 8080 (required by Cloud Run)
-RUN sed -i 's/listen\(.*\)80;/listen 8080;/g' /etc/nginx/conf.d/default.conf
+# Clean up configuration file from web root
+RUN rm -f /usr/share/nginx/html/default.conf
 
 # Expose the Cloud Run port
 EXPOSE 8080
