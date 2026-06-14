@@ -280,6 +280,46 @@
         assertEqual(hasGreenGrid, true, 'Recommends switching to renewable grid option');
       });
 
+      addTest('StorageManager: sanitizeNumber edge cases', () => {
+        assertEqual(window.StorageManager.sanitizeNumber(NaN, 5, 20), 5, 'NaN handles fallback to min');
+        assertEqual(window.StorageManager.sanitizeNumber(Infinity, 5, 20), 20, 'Infinity clamped to max');
+        assertEqual(window.StorageManager.sanitizeNumber('not-a-number', 10, 50), 10, 'Invalid text handles fallback to min');
+        assertEqual(window.StorageManager.sanitizeNumber(15, 5, 20), 15, 'Valid number left unchanged');
+      });
+
+      addTest('StorageManager: Goal fields and title HTML stripping', () => {
+        const goalData = {
+          goals: [{
+            id: 'goal-1',
+            title: '<b>Eat vegan</b> <script>alert(1)</script>',
+            category: 'invalid-category',
+            targetPercent: '30%',
+            currentValue: '8500',
+            targetValue: '6000',
+            completed: 'true',
+            createdAt: 'invalid-date'
+          }]
+        };
+        const clean = window.StorageManager.validate(goalData);
+        assertEqual(clean.goals.length, 1, 'Validates goals successfully');
+        const firstGoal = clean.goals[0];
+        assertEqual(firstGoal.title, 'bEat veganb alert1', 'XSS scripts and tags stripped from title');
+        assertEqual(firstGoal.category, 'general', 'Invalid category fallback to general');
+        assertEqual(firstGoal.targetPercent, 30, 'Target percent parsed and sanitized');
+        assertEqual(firstGoal.currentValue, 8500, 'Current value parsed and sanitized');
+        assertEqual(firstGoal.completed, true, 'Completed coerced to boolean');
+      });
+
+      addTest('CarbonCalculator: Emission factors deep immutability check', () => {
+        let threw = false;
+        try {
+          window.CarbonCalculator.EMISSION_FACTORS.transport.petrol = 999;
+        } catch (e) {
+          threw = true;
+        }
+        assertEqual(threw, true, 'Trying to modify immutable factors throws an error');
+      });
+
       // Execute tests
       const container = document.getElementById('tests-list');
       let passed = 0;

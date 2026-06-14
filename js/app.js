@@ -234,11 +234,18 @@ document.addEventListener('DOMContentLoaded', () => {
     goalForm.addEventListener('submit', (e) => {
       e.preventDefault();
       
-      const title = goalTitleInput.value.trim();
+      const titleRaw = goalTitleInput.value.trim();
       const pct = parseInt(goalReductionInput.value, 10) || 20;
 
-      if (!title) {
+      if (!titleRaw) {
         showToast('Please enter a goal description.', 'error');
+        return;
+      }
+
+      // Sanitize input title immediately to defend against XSS
+      const title = titleRaw.replace(/[<>"'`]/g, '').trim().substring(0, 100);
+      if (!title) {
+        showToast('Invalid characters in goal description.', 'error');
         return;
       }
 
@@ -454,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
           const reduction = ((baseline - current) / baseline) * 100;
           const sign = reduction >= 0 ? '-' : '+';
           summaryReduction.textContent = `${sign}${Math.abs(Math.round(reduction))}%`;
-          summaryReduction.style.color = reduction >= 0 ? 'var(--accent-primary)' : 'var(--accent-danger)';
+          summaryReduction.style.color = reduction >= 0 ? 'var(--accent-primary)' : 'var(--text-danger)';
         } else {
           summaryReduction.textContent = '0%';
         }
@@ -465,7 +472,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const diff = ((baseline - current) / baseline) * 100;
         const sign = diff >= 0 ? '-' : '+';
         summaryReduction.textContent = `${sign}${Math.abs(Math.round(diff))}%`;
-        summaryReduction.style.color = diff >= 0 ? 'var(--accent-primary)' : 'var(--accent-danger)';
+        summaryReduction.style.color = diff >= 0 ? 'var(--accent-primary)' : 'var(--text-danger)';
       }
     } else {
       summaryTotal.textContent = '--';
