@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoTrace Test Runner - Code Correctness Report</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #090e0c;
+      color: #eaedea;
+      max-width: 800px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+    h1 {
+      color: #10b981;
+      border-bottom: 2px solid #10b981;
+      padding-bottom: 10px;
+    }
+    .summary-box {
+      background: #111a15;
+      border: 1px solid #1a3026;
+      border-radius: 8px;
+      padding: 15px 20px;
+      margin-bottom: 25px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .stat {
+      text-align: center;
+    }
+    .stat-val {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+    .stat-pass { color: #10b981; }
+    .stat-fail { color: #ef4444; }
+    .test-case {
+      background: #121614;
+      border: 1px solid #202422;
+      border-radius: 6px;
+      padding: 12px 15px;
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .test-name {
+      font-weight: 500;
+    }
+    .test-status {
+      font-size: 0.85rem;
+      font-weight: bold;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .status-pass {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10b981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .status-fail {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+    .error-log {
+      color: #fda4af;
+      font-family: monospace;
+      font-size: 0.85rem;
+      margin-top: 5px;
+      padding-top: 5px;
+      border-top: 1px dashed rgba(239, 68, 68, 0.2);
+      width: 100%;
+    }
+    .test-details {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>EcoTrace Client-side Test Suite</h1>
+  <p>This page automatically verifies the mathematical calculations, storage validations, and insight rules of the Carbon Footprint Tracker.</p>
+
+  <div class="summary-box">
+    <div class="stat">
+      <div>Total Tests</div>
+      <div id="total-count" class="stat-val">0</div>
+    </div>
+    <div class="stat">
+      <div>Passed</div>
+      <div id="pass-count" class="stat-val stat-pass">0</div>
+    </div>
+    <div class="stat">
+      <div>Failed</div>
+      <div id="fail-count" class="stat-val stat-fail">0</div>
+    </div>
+  </div>
+
+  <div id="tests-list"></div>
+
+  <!-- Load Modules -->
+  <script src="js/storage.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/insights.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tests = [];
+      
+      // Assertion helpers
+      function assertEqual(actual, expected, message) {
+        if (actual !== expected) {
+          throw new Error(`${message || 'Assertion failed'}: expected ${expected}, got ${actual}`);
+        }
+      }
+
+      function assertGreaterThan(actual, minLimit, message) {
+        if (actual <= minLimit) {
+          throw new Error(`${message || 'Assertion failed'}: expected ${actual} > ${minLimit}`);
+        }
+      }
+
+      function addTest(name, fn) {
+        tests.push({ name, fn });
+      }
+
+      // --- UNIT TESTS ---
+
+      // 1. Carbon calculations unit tests
+      addTest('CarbonCalculator: Petrol Car Commute', () => {
+        const inputs = {
+          carDist: 10, // 10km daily
+          vehicleType: 'petrol',
+          pubDist: 0,
+          shortFlights: 0,
+          longFlights: 0,
+          electricity: 0,
+          renewPct: 0,
+          dietType: 'vegan', // 800 kg
+          shoppingType: 'low', // 400 kg
+          wasteType: 'low' // 100 kg
+        };
+        const res = window.CarbonCalculator.calculate(inputs);
+        // Transport = 10 * 365 * 0.18 = 657 kg CO2e
+        assertEqual(res.transport, 657, 'Transport calculations');
+        assertEqual(res.energy, 0, 'Energy calculations');
+        assertEqual(res.lifestyle, 1300, 'Lifestyle calculations');
+        assertEqual(res.total, 1957, 'Total calculation match');
+      });
+
+      addTest('CarbonCalculator: Electric Vehicle & Public Transit', () => {
+        const inputs = {
+          carDist: 20, // 20km daily
+          vehicleType: 'electric', // 20 * 365 * 0.05 = 365
+          pubDist: 50, // 50km daily * 365 * 0.04 = 730
+          shortFlights: 2, // 2 * 150 = 300
+          longFlights: 1, // 1 * 1200 = 1200
+          electricity: 0,
+          renewPct: 0,
+          dietType: 'vegetarian', // 1200
+          shoppingType: 'medium', // 1000
+          wasteType: 'medium' // 300
+        };
+        const res = window.CarbonCalculator.calculate(inputs);
+        // Transport = 365 + 730 + 300 + 1200 = 2595 kg
+        assertEqual(res.transport, 2595, 'Transport calculations');
+        assertEqual(res.lifestyle, 2500, 'Lifestyle sum');
+      });
+
+      addTest('CarbonCalculator: Renewable Grid Offset', () => {
+        const inputs = {
+          carDist: 0,
+          vehicleType: 'none',
+          pubDist: 0,
+          shortFlights: 0,
+          longFlights: 0,
+          electricity: 300, // 300kWh monthly * 12 = 3600kWh/yr * 0.38 = 1368 kg
+          renewPct: 75, // 75% renewable offset = 25% remaining = 342 kg
+          dietType: 'vegan',
+          shoppingType: 'low',
+          wasteType: 'low'
+        };
+        const res = window.CarbonCalculator.calculate(inputs);
+        assertEqual(res.energy, 342, 'Energy with renewable offset');
+      });
+
+      // 2. Storage Manager tests
+      addTest('StorageManager: Empty Validation Schema fallback', () => {
+        const invalidData = {
+          history: 'not-an-array',
+          goals: null,
+          preferences: { theme: 'magenta' }
+        };
+        const sanitized = window.StorageManager.validate(invalidData);
+        assertEqual(Array.isArray(sanitized.history), true, 'History falls back to array');
+        assertEqual(Array.isArray(sanitized.goals), true, 'Goals falls back to array');
+        assertEqual(sanitized.preferences.theme, 'dark', 'Theme falls back to default');
+      });
+
+      addTest('StorageManager: Malicious Inputs Sanitization', () => {
+        const badInputs = {
+          carDist: '9999<script>alert("XSS")</script>',
+          vehicleType: 'petrol-fuel-inject-hacks',
+          dietType: 'carnivore-diet'
+        };
+        const clean = window.StorageManager.validateInputs(badInputs);
+        assertEqual(clean.carDist, 1000, 'Numeric cast converts text inputs and clamps to max limit');
+        assertEqual(clean.vehicleType, 'petrol-fuel-inject-hacks', 'Filters special characters');
+        assertEqual(clean.dietType, 'carnivore-diet', 'Standard alpha characters preserved safely');
+      });
+
+      addTest('StorageManager: Boundary Clamping Enforcements', () => {
+        const outOfBounds = {
+          carDist: -50,
+          pubDist: 1500,
+          shortFlights: -2,
+          longFlights: 120,
+          electricity: 15000,
+          renewPct: 150
+        };
+        const clean = window.StorageManager.validateInputs(outOfBounds);
+        assertEqual(clean.carDist, 0, 'Negative carDist clamped to 0');
+        assertEqual(clean.pubDist, 1000, 'High pubDist clamped to 1000');
+        assertEqual(clean.shortFlights, 0, 'Negative shortFlights clamped to 0');
+        assertEqual(clean.longFlights, 100, 'High longFlights clamped to 100');
+        assertEqual(clean.electricity, 10000, 'High electricity clamped to 10000');
+        assertEqual(clean.renewPct, 100, 'High renewPct clamped to 100');
+      });
+
+      addTest('CarbonCalculator: Extreme Out-of-Bounds Computation Safety', () => {
+        const negativeInputs = {
+          carDist: -20,
+          vehicleType: 'petrol',
+          pubDist: -10,
+          shortFlights: -5,
+          longFlights: -1,
+          electricity: -300,
+          renewPct: -50,
+          dietType: 'vegan',
+          shoppingType: 'low',
+          wasteType: 'low'
+        };
+        const res = window.CarbonCalculator.calculate(negativeInputs);
+        assertEqual(res.transport, 0, 'Negative distances result in 0 transport emissions');
+        assertEqual(res.energy, 0, 'Negative energy results in 0 energy emissions');
+        assertEqual(res.lifestyle, 1300, 'Lifestyle computes correctly based on diet profiles');
+        assertEqual(res.total, 1300, 'Negative inputs yield baseline values without crashing');
+      });
+
+      // 3. Recommendation engine tests
+      addTest('InsightsEngine: Serve High Impact Recommendations', () => {
+        const inputs = {
+          carDist: 50,
+          vehicleType: 'petrol',
+          pubDist: 0,
+          shortFlights: 0,
+          longFlights: 0,
+          electricity: 400,
+          renewPct: 0,
+          dietType: 'heavy-meat',
+          shoppingType: 'high',
+          wasteType: 'high'
+        };
+        
+        const recs = window.InsightsEngine.generate(inputs);
+        assertGreaterThan(recs.length, 2, 'Generates list of custom tips');
+        
+        // Ensure switch electric is recommended for heavy drivers
+        const hasEvGoal = recs.some(r => r.id === 'switch-electric');
+        assertEqual(hasEvGoal, true, 'Recommends EV switch');
+
+        const hasGreenGrid = recs.some(r => r.id === 'switch-renewable');
+        assertEqual(hasGreenGrid, true, 'Recommends switching to renewable grid option');
+      });
+
+      // Execute tests
+      const container = document.getElementById('tests-list');
+      let passed = 0;
+      let failed = 0;
+
+      tests.forEach(test => {
+        const card = document.createElement('div');
+        card.className = 'test-case';
+
+        const details = document.createElement('div');
+        details.className = 'test-details';
+        
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'test-name';
+        nameSpan.textContent = test.name;
+        details.appendChild(nameSpan);
+
+        const statusSpan = document.createElement('span');
+        statusSpan.className = 'test-status';
+
+        try {
+          test.fn();
+          statusSpan.textContent = 'PASS';
+          statusSpan.classList.add('status-pass');
+          passed++;
+        } catch (err) {
+          statusSpan.textContent = 'FAIL';
+          statusSpan.classList.add('status-fail');
+          
+          const errDiv = document.createElement('div');
+          errDiv.className = 'error-log';
+          errDiv.textContent = err.stack || err.message;
+          details.appendChild(errDiv);
+          failed++;
+        }
+
+        card.appendChild(details);
+        card.appendChild(statusSpan);
+        container.appendChild(card);
+      });
+
+      // Update summaries
+      document.getElementById('total-count').textContent = tests.length;
+      document.getElementById('pass-count').textContent = passed;
+      document.getElementById('fail-count').textContent = failed;
+    });
+  </script>
+</body>
+</html>

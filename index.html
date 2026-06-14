@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Track your carbon footprint, set custom sustainability goals, and receive personalized recommendations to lower your environmental impact.">
+  <title>Carbon Footprint Tracker - Monitor & Reduce Emissions</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header>
+    <div class="header-container">
+      <div class="logo-section">
+        <span class="logo-icon" aria-hidden="true">🌱</span>
+        <span class="logo-text">EcoTrace</span>
+      </div>
+      <button id="theme-toggle" class="theme-toggle-btn" aria-label="Toggle theme">
+        <span id="theme-icon" aria-hidden="true">☀️</span>
+        <span id="theme-btn-text">Light Mode</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main-content">
+    
+    <!-- Hero Section -->
+    <section class="hero-section">
+      <h1 class="hero-title">Calculate, Track, and <span>Reduce</span> Your Footprint</h1>
+      <p class="hero-subtitle">Make data-driven decisions to lower your carbon footprint. Calculate your annual footprint, set sustainability milestones, and unlock tailored environmental insights.</p>
+      
+      <div class="hero-summary-grid" role="region" aria-label="Footprint Summary Stats">
+        <div class="summary-card">
+          <h3>Annual Footprint</h3>
+          <p id="summary-total" class="summary-val" aria-live="polite">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Active Goals</h3>
+          <p id="summary-goals" class="summary-val" aria-live="polite">--</p>
+        </div>
+        <div class="summary-card">
+          <h3>Target Progress</h3>
+          <p id="summary-reduction" class="summary-val" aria-live="polite">--</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Main Layout Grid -->
+    <div class="app-grid">
+      
+      <!-- Calculator Section -->
+      <section class="panel" aria-labelledby="calc-title">
+        <h2 id="calc-title" class="panel-title"><span>📊</span> Emission Calculator</h2>
+        
+        <form id="calculator-form" novalidate>
+          
+          <!-- Transportation Group -->
+          <fieldset class="form-group">
+            <legend class="form-group-title">🚗 Transportation</legend>
+            
+            <div class="form-row">
+              <div>
+                <label for="car-dist">Daily Commute by Car (km)</label>
+                <input 
+                  type="number" 
+                  id="car-dist" 
+                  name="carDist" 
+                  min="0" 
+                  max="1000" 
+                  placeholder="e.g. 25"
+                  aria-describedby="car-dist-help"
+                  aria-errormessage="car-dist-error"
+                >
+                <span id="car-dist-help" class="sr-only">Enter daily mileage in kilometers. Numbers from 0 to 1000.</span>
+                <span id="car-dist-error" class="error-message" aria-live="assertive"></span>
+              </div>
+              
+              <div>
+                <label for="vehicle-type">Vehicle Fuel/Engine Type</label>
+                <select id="vehicle-type" name="vehicleType">
+                  <option value="none">No Car / Do not drive</option>
+                  <option value="petrol">Petrol / Gasoline</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="hybrid">Hybrid</option>
+                  <option value="electric">Electric (EV)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="pub-dist">Daily Transit Travel (bus/train km)</label>
+                <input 
+                  type="number" 
+                  id="pub-dist" 
+                  name="pubDist" 
+                  min="0" 
+                  max="1000" 
+                  placeholder="e.g. 15"
+                  aria-describedby="pub-dist-help"
+                  aria-errormessage="pub-dist-error"
+                >
+                <span id="pub-dist-help" class="sr-only">Enter daily public transit distance in kilometers, up to 1000.</span>
+                <span id="pub-dist-error" class="error-message" aria-live="assertive"></span>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="short-flights">Short Flights per Year (&lt; 3 hrs)</label>
+                <input 
+                  type="number" 
+                  id="short-flights" 
+                  name="shortFlights" 
+                  min="0" 
+                  max="100" 
+                  placeholder="e.g. 2"
+                  aria-describedby="short-flights-help"
+                  aria-errormessage="short-flights-error"
+                >
+                <span id="short-flights-help" class="sr-only">Enter number of short flights per year, up to 100.</span>
+                <span id="short-flights-error" class="error-message" aria-live="assertive"></span>
+              </div>
+              <div>
+                <label for="long-flights">Long Flights per Year (&gt; 3 hrs)</label>
+                <input 
+                  type="number" 
+                  id="long-flights" 
+                  name="longFlights" 
+                  min="0" 
+                  max="100" 
+                  placeholder="e.g. 1"
+                  aria-describedby="long-flights-help"
+                  aria-errormessage="long-flights-error"
+                >
+                <span id="long-flights-help" class="sr-only">Enter number of long flights per year, up to 100.</span>
+                <span id="long-flights-error" class="error-message" aria-live="assertive"></span>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Energy Group -->
+          <fieldset class="form-group">
+            <legend class="form-group-title">⚡ Home Energy</legend>
+            
+            <div class="form-row">
+              <div>
+                <label for="electricity">Monthly Electricity (kWh)</label>
+                <input 
+                  type="number" 
+                  id="electricity" 
+                  name="electricity" 
+                  min="0" 
+                  max="10000" 
+                  placeholder="e.g. 250"
+                  aria-describedby="electricity-help"
+                  aria-errormessage="electricity-error"
+                >
+                <span id="electricity-help" class="sr-only">Enter monthly electricity consumption in kWh, up to 10000.</span>
+                <span id="electricity-error" class="error-message" aria-live="assertive"></span>
+              </div>
+              <div>
+                <label for="renew-pct">Renewable Energy Supply (%)</label>
+                <div class="range-container">
+                  <input 
+                    type="range" 
+                    id="renew-pct" 
+                    name="renewPct" 
+                    min="0" 
+                    max="100" 
+                    value="0"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                  >
+                  <span id="renew-pct-val" class="range-val" aria-live="polite">0%</span>
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Lifestyle Group -->
+          <fieldset class="form-group">
+            <legend class="form-group-title">🥦 Lifestyle & Consumption</legend>
+            
+            <div class="form-row">
+              <div>
+                <label for="diet-type">Diet Profile</label>
+                <select id="diet-type" name="dietType">
+                  <option value="heavy-meat">Heavy Meat Eater</option>
+                  <option value="average-meat" selected>Average Meat Eater</option>
+                  <option value="flexitarian">Low Meat / Flexitarian</option>
+                  <option value="vegetarian">Vegetarian</option>
+                  <option value="vegan">Vegan</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div>
+                <label for="shopping-type">Shopping Habits</label>
+                <select id="shopping-type" name="shoppingType">
+                  <option value="low">Minimalist / Essential shopping</option>
+                  <option value="medium" selected>Average consumer spending</option>
+                  <option value="high">High shopper / Brand enthusiast</option>
+                </select>
+              </div>
+              <div>
+                <label for="waste-type">Waste & Recycling Habit</label>
+                <select id="waste-type" name="wasteType">
+                  <option value="low">Low waste (Strict recycling & composting)</option>
+                  <option value="medium" selected>Average waste (Basic recycling)</option>
+                  <option value="high">High waste (Minimal recycling)</option>
+                </select>
+              </div>
+            </div>
+          </fieldset>
+
+          <button type="submit" class="btn btn-primary btn-block">Calculate Footprint</button>
+        </form>
+      </section>
+
+      <!-- Dashboard Section -->
+      <section class="panel" aria-labelledby="dashboard-title">
+        <h2 id="dashboard-title" class="panel-title"><span>📈</span> Progress Dashboard</h2>
+        
+        <div class="dashboard-grid">
+          
+          <!-- Donut Breakdown -->
+          <div class="panel-sub" role="region" aria-label="Category Emission Breakdown">
+            <h3 class="form-group-title">Emission Breakdown</h3>
+            <div id="donut-chart-container"></div>
+          </div>
+          
+          <!-- History Trends -->
+          <div class="panel-sub" role="region" aria-label="Historical Tracking Trends">
+            <h3 class="form-group-title">Historical Trend</h3>
+            <div id="line-chart-container"></div>
+          </div>
+          
+          <!-- Comparison Gauge -->
+          <div class="gauge-panel" role="region" aria-label="Comparison to Average Baseline">
+            <h3 class="form-group-title">How You Compare</h3>
+            <div id="gauge-container"></div>
+          </div>
+          
+        </div>
+      </section>
+      
+    </div>
+
+    <!-- Recommendations Section -->
+    <section class="panel" style="margin-top: 30px;" aria-labelledby="recs-title">
+      <h2 id="recs-title" class="panel-title"><span>💡</span> Personalized Recommendations</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">Based on your inputs, we've identified the following actions with the highest impact to reduce your footprint.</p>
+      
+      <div id="recommendations-container" class="recommendations-grid">
+        <!-- Dyn. populated cards -->
+      </div>
+    </section>
+
+    <!-- Goals Tracker Section -->
+    <section class="panel" style="margin-top: 30px;" aria-labelledby="goals-title">
+      <h2 id="goals-title" class="panel-title"><span>🎯</span> Sustainability Goals</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 20px;">Set targets to lower your carbon impact and monitor your progress over time.</p>
+      
+      <div class="goals-wrapper">
+        <form id="add-goal-form" class="add-goal-form" novalidate>
+          <div>
+            <label for="goal-title-input">Goal Description</label>
+            <input 
+              type="text" 
+              id="goal-title-input" 
+              placeholder="e.g. Reduce diet emissions or ride transit" 
+              required
+              maxlength="100"
+            >
+          </div>
+          <div>
+            <label for="goal-reduction-input">Target Reduction %</label>
+            <select id="goal-reduction-input">
+              <option value="10">10% Reduction</option>
+              <option value="20" selected>20% Reduction</option>
+              <option value="30">30% Reduction</option>
+              <option value="50">50% Reduction</option>
+            </select>
+          </div>
+          <button type="submit" class="btn btn-secondary">Add Goal</button>
+        </form>
+
+        <div id="goals-list" class="goals-list" role="region" aria-label="Active Sustainability Goals List">
+          <!-- Dyn. populated list -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Report Box -->
+    <section class="report-action-panel" role="region" aria-label="Footprint Report actions">
+      <div class="report-text">
+        <h4>Need a printable report?</h4>
+        <p>Save your progress dashboard and carbon evaluation profile for offline reading, sharing, or educational school reports.</p>
+      </div>
+      <button id="print-report-btn" class="btn btn-secondary">
+        <span>🖨️</span> Print Full Report
+      </button>
+    </section>
+
+  </main>
+
+  <footer>
+    <div class="footer-container">
+      <div>
+        <p>&copy; 2026 EcoTrace Carbon Tracker. Built with 💚 for the planet.</p>
+        <p style="font-size: 0.75rem; margin-top: 5px; color: var(--text-muted);">Methodology sources: IPCC Guideline factors, EPA, Defra greenhouse gas conversion reports.</p>
+      </div>
+      <div class="footer-links">
+        <a href="#main-content">Back to Top</a>
+        <a href="https://www.ipcc.ch/" target="_blank" rel="noopener noreferrer">IPCC Science</a>
+      </div>
+    </div>
+  </footer>
+
+  <div id="toast-container" class="toast-container" aria-live="assertive" aria-atomic="true"></div>
+
+  <!-- App logic scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/calculator.js"></script>
+  <script src="js/insights.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
